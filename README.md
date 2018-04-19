@@ -1,2 +1,2 @@
 # SudoKu-solution
-This is Xia
+This is the solution of Sudoku
