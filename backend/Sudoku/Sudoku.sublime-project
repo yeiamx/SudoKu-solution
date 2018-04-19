@@ -1,0 +1,14 @@
+{
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": "./"
+		}
+	],
+
+    "settings":
+    {
+        "python_interpreter": "/usr/local/bin/python"
+    }
+}
