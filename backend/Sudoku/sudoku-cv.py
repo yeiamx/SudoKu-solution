@@ -74,7 +74,7 @@ def sort_grid_points(points):
 
 
 def process(frame):
-
+    #cv2.imshow('Input', frame)
     #
     # 1. preprocessing
     #
@@ -84,6 +84,11 @@ def process(frame):
         adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         thresholdType=cv2.THRESH_BINARY, blockSize=11, C=2)
     blurred = cv2.medianBlur(binary, ksize=3)
+    #cv2.imshow('blurred', blurred)
+
+    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # ret, blurred = cv2.threshold(gray,127,255,cv2.THRESH_BINARY)
+    # cv2.imshow('blurred', blurred)
 
     #
     # 2. try to find the sudoku
@@ -91,11 +96,20 @@ def process(frame):
     contours, _ = cv2.findContours(image=cv2.bitwise_not(blurred),
                                    mode=cv2.RETR_LIST,
                                    method=cv2.CHAIN_APPROX_SIMPLE)
+    #cv2.drawContours(blurred,contours,-1,(255,0,0),3)
+    #cv2.imshow('contour', blurred)
+
     sudoku_area = 0
     sudoku_contour = None
     for cnt in contours:
         area = cv2.contourArea(cnt)
         x, y, w, h = cv2.boundingRect(cnt)
+        if area>150*150 and area>.5 * w * h:
+            print 'area: '+ str(area)
+            print 'sudoku_area' + str(sudoku_area)
+            print 'w:'+str(w) + ' h: '+str(h)
+            print 'ratio:'+str(float(w) / h)
+
         if (0.7 < float(w) / h < 1.3     # aspect ratio
                 and area > 150 * 150     # minimal area
                 and area > sudoku_area   # biggest area on screen
@@ -107,13 +121,13 @@ def process(frame):
     # 3. separate sudoku from background
     #
     if sudoku_contour is not None:
-
+        #print 'get contour!'
         # approximate the contour with connected lines
         perimeter = cv2.arcLength(curve=sudoku_contour, closed=True)
         approx = cv2.approxPolyDP(curve=sudoku_contour,
                                   epsilon=0.1 * perimeter,
                                   closed=True)
-
+        #print 'arrpox len:'+str(len(approx))
         if len(approx) == 4:
             # successfully approximated
             # we now transform the sudoku to a fixed size 450x450
@@ -215,6 +229,7 @@ def process(frame):
             contours, _ = cv2.findContours(image=crossing,
                                            mode=cv2.RETR_LIST,
                                            method=cv2.CHAIN_APPROX_SIMPLE)
+
             # a complete sudoku must have exactly 100 crossing points
             if len(contours) == 100:
                 # take the center points of the bounding rects of the crossing
@@ -312,8 +327,8 @@ def solve_sudoku_ocr(src, crossing_points):
 
         # show the solution in console
         if args.debug:
-            print(solved_sudoku)
-            print()  # newline
+            print (solved_sudoku)
+            print () # newline
 
         # show solution image. Pass the sudoku source to enable colouring
         source_sudoku = sudoku.Sudoku(numbers)
@@ -321,7 +336,7 @@ def solve_sudoku_ocr(src, crossing_points):
         cv2.imshow('solution', solution_image)
     except:
         # no solutions found
-        pass
+        print 'no solution'
 
 
 def draw_sudoku(sudoku, source=None):
@@ -367,6 +382,8 @@ def solve_sudoku_in_video(camera):
     """Uses the main video capture device for detection"""
     cap = cv2.VideoCapture(camera)
     if cap.isOpened():
+        cap.set(3,800)
+        cap.set(4,800)
         while(not cv2.waitKey(1) & 0xFF == ord('q')):
             _, frame = cap.read()
             if _ is True:

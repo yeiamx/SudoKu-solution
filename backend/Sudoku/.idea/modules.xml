@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Sudoku.iml" filepath="$PROJECT_DIR$/.idea/Sudoku.iml" />
+      <module fileurl="file://E:/PYTHON/Python Project/Sudoku/.idea/Sudoku.iml" filepath="E:/PYTHON/Python Project/Sudoku/.idea/Sudoku.iml" />
       <module fileurl="file://E:/PYTHON/Python Project/Sudoku/.idea/Sudoku.iml" filepath="E:/PYTHON/Python Project/Sudoku/.idea/Sudoku.iml" />
     </modules>
   </component>
