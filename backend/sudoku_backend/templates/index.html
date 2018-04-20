@@ -9,7 +9,8 @@
 </head>
 <body>
     <video id="video" width="640" height="480" autoplay></video>
-    <button id="snap">Snap Photo</button>
+    <button id="start">Start detect</button>
+    <button id="stop">Stop</button>
     <canvas id="canvas" width="640" height="480"></canvas>
     <img id="display" src=""/>
 
@@ -17,7 +18,9 @@
         var aVideo=document.getElementById('video');
         var aCanvas=document.getElementById('canvas');
         var ctx=aCanvas.getContext('2d');
-        var butSend=document.getElementById('snap');
+        var butSend=document.getElementById('start');
+        var butStop=document.getElementById('stop');
+        var interval;
 
         navigator.getUserMedia  = navigator.getUserMedia ||
                   navigator.webkitGetUserMedia ||
@@ -37,32 +40,47 @@
         }
         function noStream(err) {
                 alert(err);
-      }
+        }
 
-      document.getElementById("snap").addEventListener("click", function() {
-                ctx.drawImage(aVideo, 0, 0, 640, 480);//将获取视频绘制在画布上
+        function sendData() {
+            ctx.drawImage(aVideo, 0, 0, 640, 480);//将获取视频绘制在画布上
+            base64Data = aCanvas.toDataURL("image/png", 1.0).substr(22)
 
-                base64Data = aCanvas.toDataURL("image/png", 1.0).substr(22)
-                butSend.disabled=true
-                butSend.innerHtml="Pending..."
+            $.post("http://127.0.0.1:8000/solve",
+            {
+              data : base64Data
+            },
+            function(data,status){
 
-                $.post("http://127.0.0.1:8000/solve",
-                {
-                  data : base64Data
-                },
-                function(data,status){
-                   //alert(data)
-                   data = JSON.parse(data);
-                   var img = document.getElementById("display");
-                   img.src = data['result'];
 
+               data = JSON.parse(data);
+               var img = document.getElementById("display");
+               var src = data['result'];
+               var status = data['status'];
+
+               //if status==success stop the clock and draw the result.
+               if (status == 'success') {
+                   self.clearInterval(interval);
                    butSend.disabled=false
                    butSend.innerHtml="SEND"
-                }).fail(function(){
-                   butSend.disabled=false
-                   butSend.innerHtml="SEND"
-                });
-      });
+
+                   img.src = src
+                   alert(src)
+               }
+            }).fail(function(){
+               //if fail, make it continue to post data.
+            });
+          }
+
+        butSend.addEventListener("click", function() {
+            butSend.disabled=true
+            interval=self.setInterval("sendData()",1000);
+        });
+
+        butStop.addEventListener("click", function(){
+            self.clearInterval(interval);
+            butSend.disabled=false
+        });
 
     </script>
 </body>
