@@ -5,15 +5,27 @@ import json
 import cv2
 import cv2.cv as cv
 import numpy as np
-import tesseract
+import pytesseract
+from PIL import Image
 import sudoku
 import base64
 
 # init tesseract
-api = tesseract.TessBaseAPI()
-api.Init("D://Tesseract-OCR//tessdata", "eng", tesseract.OEM_DEFAULT)
-api.SetPageSegMode(tesseract.PSM_SINGLE_BLOCK)
-api.SetVariable("tessedit_char_whitelist", "123456789")
+# api = tesseract.TessBaseAPI()
+# api.Init("D://Tesseract-OCR//tessdata", "eng", tesseract.OEM_DEFAULT)
+# api.SetPageSegMode(tesseract.PSM_SINGLE_BLOCK)
+# api.SetVariable("tessedit_char_whitelist", "123456789")
+
+rep={'O':'0',
+     'o':'0',
+    'I':'1','L':'1',
+    'Z':'2',
+    'S':'8',
+     'T':'7',
+     ':':'8',
+     'l':'1',
+     '.':''
+    }
 
 debug = False
 
@@ -77,7 +89,7 @@ def sort_grid_points(points):
     return points
 
 
-def process(frame):
+def process_pic(frame):
     #cv2.imshow('Input', frame)
     #
     # 1. preprocessing
@@ -120,18 +132,18 @@ def process(frame):
                 and area > .5 * w * h):  # fills bounding rect
             sudoku_area = area
             sudoku_contour = cnt
-
+    print("contours:"+str(len(contours)))
     #
     # 3. separate sudoku from background
     #
     if sudoku_contour is not None:
-        #print 'get contour!'
+        print 'get contour!'
         # approximate the contour with connected lines
         perimeter = cv2.arcLength(curve=sudoku_contour, closed=True)
         approx = cv2.approxPolyDP(curve=sudoku_contour,
                                   epsilon=0.1 * perimeter,
                                   closed=True)
-        #print 'arrpox len:'+str(len(approx))
+        print 'arrpox len:'+str(len(approx))
         if len(approx) == 4:
             # successfully approximated
             # we now transform the sudoku to a fixed size 450x450
@@ -247,9 +259,10 @@ def process(frame):
                 sorted_cross_points = sort_grid_points(crossing_points)
                 # show the numbers next to the points
                 for n, p in enumerate(sorted_cross_points):
+                    #print str(n)
                     draw_str(grid, map(int, p[0]), str(n))
-                #cv2.imshow('sorted grid', grid)
-                #cv2.waitKey(0)
+                # cv2.imshow('sorted grid', grid)
+                # cv2.waitKey(0)
                 #
                 # 6. Solve the sudoku
                 #
@@ -285,19 +298,28 @@ def solve_sudoku_ocr(src, crossing_points):
 
         matrix = cv2.getPerspectiveTransform(quad, square)
         transformed = cv2.warpPerspective(src, matrix, (30, 30))
-        #cv2.imshow('transoformed', transformed)
-        #cv2.waitKey(0)
-
+        # cv2.imshow("transformed", transformed)
+        # cv2.waitKey(0)
         #
         # perform the ocr
         #
 
         # for the tesseract api it is neccessary to convert the image to the
         # old style opencv iplimage
-        ipl = iplimage_from_array(transformed)
-        tesseract.SetCvImage(ipl, api)
-        ocr_text = api.GetUTF8Text()
-        #print "num_text:"+ocr_text
+        # ipl = iplimage_from_array(transformed)
+        # tesseract.SetCvImage(ipl, api)
+        # ocr_text = api.GetUTF8Text()
+
+        img_new = Image.fromarray(transformed)
+        ocr_text = pytesseract.image_to_string(img_new, lang='eng', config="-psm 10")
+        # cv2.imshow('real', transformed)
+        # cv2.waitKey(0)
+        # print ("ocr_text:"+ocr_text)
+        if ocr_text in rep:
+            ocr_text = rep[ocr_text]
+        if ((not ocr_text.isalnum()) and (not ocr_text.isalpha())):
+             ocr_text = ""
+        # print ('change to '+ocr_text)
 
         #
         # Number conversion
@@ -382,8 +404,7 @@ def draw_sudoku(sudoku, source=None):
 def solve_sudoku_in_picture(pic):
     """uses a given file for detection"""
     if pic is not None:
-        return process(pic)
-        #cv2.waitKey(0)
+        return process_pic(pic)
     else:
         raise IOError('Cannot open file')
 
@@ -396,6 +417,14 @@ def index(request):
     return render(request, 'index.html', context)
 
 @csrf_exempt
+def process(request):
+    context = {}
+    #context['hello'] = 'Hello World! (draw version)'
+    #context['imgUrl'] = ''
+
+    return render(request, 'process.html', context)
+
+@csrf_exempt
 def solve(request):
     if request.method == 'POST':
         #print(request.POST.get('data'))
@@ -404,7 +433,8 @@ def solve(request):
         imgData = base64.b64decode(dataStr)
         nparr = np.fromstring(imgData,np.uint8)
         img_np = cv2.imdecode(nparr,cv2.CV_LOAD_IMAGE_COLOR)
-
+        # cv2.imshow("pass", img_np)
+        # cv2.waitKey(0)
         status, img_solution = solve_sudoku_in_picture(img_np)
         #cv2.imwrite('result.png', img_solution)
 
@@ -420,3 +450,10 @@ def solve(request):
                 "status": status,
                 "result": 'data:image/png;base64,'+base64_data
             }))
+
+@csrf_exempt
+def solve_origin(request):
+    if request.method == 'POST':
+        print(request.POST.get('data'))
+
+        return HttpResponse("YES!")
