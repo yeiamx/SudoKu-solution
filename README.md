@@ -9,7 +9,8 @@ Introduction
 
 Usage
 ===
-可以在我的[Sudoku主页](http://www.dwwd.fun:8000/index)上下载或者在网站上在线处理，but remind，在线处理的功能仅仅是demo版本，由于算法原因还有很大的改进空间，，而提供下载的软件的效果要相对好一些。
+可以在我的[Sudoku主页](http://www.dwwd.fun:8000/index)上下载或者在网站上在线处理，but remind，在线处理的功能仅仅是demo版本，由于算法原因还有很大的改进空间，，而提供下载的软件的效果要相对好一些。</br>
+
 网页
 ---
 ![Alt text](https://github.com/yeiamx/SudoKu-solution/raw/master/Screenshots/index.png)</br>
